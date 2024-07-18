@@ -12,7 +12,7 @@ function RequestAndPay({ requests, getNameAndBalance }) {
   const [requestMessage, setRequestMessage] = useState("");
 
   const { config } = usePrepareContractWrite({
-    chainId: "0xAA36A7" ,
+    chainId: "11155111" ,
     address: "0xA40181c6f34CdE3D131b9153a31fEebaeF569B1c",
     abi: ABI,
     functionName: "payRequest",
@@ -25,7 +25,7 @@ function RequestAndPay({ requests, getNameAndBalance }) {
   const { write, data } = useContractWrite(config);
 
   const { config: configRequest } = usePrepareContractWrite({
-    chainId: "0xAA36A7",
+    chainId: "11155111",
     address: "0xA40181c6f34CdE3D131b9153a31fEebaeF569B1c",
     abi: ABI,
     functionName: "createRequest",

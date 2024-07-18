@@ -6,7 +6,11 @@ require("dotenv").config();
 const port = 3001;
 const ABI = require("./abi.json");
 
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow requests from any origin. Adjust this for specific domains if needed
+  methods: 'GET,POST,PUT,DELETE', // Allow specific HTTP methods
+  allowedHeaders: 'Content-Type,Authorization' // Allow specific headers
+}));
 app.use(express.json());
 
 
