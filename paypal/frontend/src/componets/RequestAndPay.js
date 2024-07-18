@@ -1,14 +1,48 @@
 import React, { useState, useEffect } from "react";
 import { DollarOutlined, SwapOutlined } from "@ant-design/icons";
 import { Modal, Input, InputNumber } from "antd";
+import { usePrepareContractWrite, useContractWrite, useWaitForTransaction  } from "wagmi";
+import ABI from "../abi.json";
 
-
-function RequestAndPay({}) {
+function RequestAndPay({ requests, getNameAndBalance }) {
   const [payModal, setPayModal] = useState(false);
   const [requestModal, setRequestModal] = useState(false);
   const [requestAmount, setRequestAmount] = useState(5);
   const [requestAddress, setRequestAddress] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
+
+  const { config } = usePrepareContractWrite({
+    chainId: "0xAA36A7" ,
+    address: "0xA40181c6f34CdE3D131b9153a31fEebaeF569B1c",
+    abi: ABI,
+    functionName: "payRequest",
+    args: [0],
+    overrides: {
+      value: String(Number(requests["1"][0] * 1e18)),
+    },
+  });
+
+  const { write, data } = useContractWrite(config);
+
+  const { config: configRequest } = usePrepareContractWrite({
+    chainId: "0xAA36A7",
+    address: "0xA40181c6f34CdE3D131b9153a31fEebaeF569B1c",
+    abi: ABI,
+    functionName: "createRequest",
+    args: [requestAddress, requestAmount, requestMessage],
+  });
+
+  const { write: writeRequest, data: dataRequest } = useContractWrite(configRequest);
+
+
+  const { isSuccess } = useWaitForTransaction({
+    hash: data?.hash,
+  })
+
+  const { isSuccess: isSuccessRequest } = useWaitForTransaction({
+    hash: dataRequest?.hash,
+  })
+
 
   const showPayModal = () => {
     setPayModal(true);
@@ -24,23 +58,38 @@ function RequestAndPay({}) {
     setRequestModal(false);
   };
 
+  useEffect(()=>{
+    if(isSuccess || isSuccessRequest){
+      getNameAndBalance();
+    }
+  },[isSuccess, isSuccessRequest])
+
   return (
     <>
       <Modal
         title="Confirm Payment"
         open={payModal}
         onOk={() => {
+          write?.();
           hidePayModal();
         }}
         onCancel={hidePayModal}
         okText="Proceed To Pay"
         cancelText="Cancel"
       >
+        {requests && requests["0"].length > 0 && (
+          <>
+            <h2>Sending payment to {requests["3"][0]}</h2>
+            <h3>Value: {requests["1"][0]} Matic</h3>
+            <p>"{requests["2"][0]}"</p>
+          </>
+        )}
       </Modal>
       <Modal
         title="Request A Payment"
         open={requestModal}
         onOk={() => {
+          writeRequest?.();
           hideRequestModal();
         }}
         onCancel={hideRequestModal}
@@ -63,7 +112,9 @@ function RequestAndPay({}) {
         >
           <DollarOutlined style={{ fontSize: "26px" }} />
           Pay
-            <div className="numReqs">2</div>
+          {requests && requests["0"].length > 0 && (
+            <div className="numReqs">{requests["0"].length}</div>
+          )}
         </div>
         <div
           className="quickOption"
